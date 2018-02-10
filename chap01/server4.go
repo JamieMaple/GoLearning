@@ -1,25 +1,45 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/gif"
 	"io"
+	"log"
 	"math"
 	"math/rand"
-	"os"
+	"net/http"
+	"sync"
 )
+
+var mu sync.Mutex
+var count int
+
+func main() {
+	http.HandleFunc("/", handler)
+	http.HandleFunc("/counter", counter)
+	log.Fatal(http.ListenAndServe("localhost:8080", nil))
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	lissajous(w)
+	return
+}
+
+func counter(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	count++
+	mu.Unlock()
+	fmt.Fprintf(w, "Count %d\n", count)
+}
 
 var palette = []color.Color{color.White, color.Black}
 
 const (
-	whiteIndex = 0
-	blackIndex = 1
+	whiteIndex = 0 // first color in palette
+	blackIndex = 1 // next color in palette
 )
-
-func main() {
-	lissajous(os.Stdout)
-}
 
 func lissajous(out io.Writer) {
 	const (
